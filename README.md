@@ -4,10 +4,14 @@ Pipeline:
 RTSP -> Decode -> Preprocess -> ONNX -> Postprocess -> Visualize
 
 问题:\
-高清RTSP: /onvif/profile1/ ---200ms/frame\
-低清RTSP: /onvif/profile2/ ---20ms/frame\
-推理阻塞: CPU<nbsp><nbsp/><nbsp>---300ms/frame\
-延迟叠加: 2-3 FPS\
+## Performance Analysis (CPU Version)
+
+| Component        | Latency        |
+|------------------|---------------|
+| RTSP (HD)       | 200 ms/frame |
+| RTSP (Substream)| 20 ms/frame  |
+| Inference (CPU) | 300 ms/frame |
+| End-to-End FPS  | 2–3 FPS      |
 
 # 2. 主干框架
 
