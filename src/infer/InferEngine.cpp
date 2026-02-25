@@ -57,7 +57,7 @@ namespace {
         float* dstB = chw.data() + 2 * HW;
 
         for (int y = 0; y < H; ++y) {
-            const cv::Vec3b* row = bgr.ptr<cv::Vec3b>(y); // ģ�庯������Vec3b*���ͣ�����y�е�������Ϣ
+            const cv::Vec3b* row = bgr.ptr<cv::Vec3b>(y);
             for (int x = 0; x < W; ++x) {
                 const int idx = y * W + x;
                 const float inv255 = 1.0f / 255.0f;
@@ -76,10 +76,10 @@ namespace {
 
 InferEngine::InferEngine(const Options& opt)
     : opt_(opt),
-    env_(ORT_LOGGING_LEVEL_WARNING, "CppInferDemo") { }
+    env_(ORT_LOGGING_LEVEL_WARNING, "CppInferDemo") { } // Constructor: initialize ORT environment only
 
 void InferEngine::LoadModel(const std::wstring& model_path) {
-    session_opt_ = Ort::SessionOptions{};  // ȷ�����ظ� Load / Reload
+    session_opt_ = Ort::SessionOptions{};
 
     session_opt_.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
 
@@ -87,11 +87,9 @@ void InferEngine::LoadModel(const std::wstring& model_path) {
         session_opt_.SetIntraOpNumThreads(opt_.intra_op_num_threads);
     }
 
-    // TODO: opt_.use_cuda Ϊ true ʱ��������� CUDA provider
-
+    // Create ONNX Runtime session 
     session_ = Ort::Session(env_, model_path.c_str(), session_opt_);
 
-    // ��ȡ���������
     Ort::AllocatorWithDefaultOptions allocator;
 
     input_names_.clear();
@@ -106,7 +104,7 @@ void InferEngine::LoadModel(const std::wstring& model_path) {
     input_names_.reserve(num_inputs);
     for (size_t i = 0; i < num_inputs; ++i) {
         auto name = session_.GetInputNameAllocated(i, allocator);
-        input_names_.push_back(name.get()); // std::string ������OK
+        input_names_.push_back(name.get());
     }
 
     size_t num_outputs = session_.GetOutputCount();
@@ -116,10 +114,9 @@ void InferEngine::LoadModel(const std::wstring& model_path) {
         output_names_.push_back(name.get());
     }
 
-    // ��ȡģ������ά��
     auto input_type_info = session_.GetInputTypeInfo(0);
     auto input_tensor_info = input_type_info.GetTensorTypeAndShapeInfo();
-    auto shape = input_tensor_info.GetShape(); // [N,C,H,W]�������� -1
+    auto shape = input_tensor_info.GetShape();
     
     if (shape.size() != 4) {
         throw std::runtime_error("InferEngine expects input rank 4: [N,C,H,W].");
@@ -134,7 +131,6 @@ void InferEngine::LoadModel(const std::wstring& model_path) {
         throw std::runtime_error("InferEngine expects input shape [1,3,H,W].");
     }
 
-    // �������� preprocess �ߴ�
     if (opt_.input_h > 0 && opt_.input_w > 0) {
         input_h_ = opt_.input_h;
         input_w_ = opt_.input_w;
@@ -160,7 +156,6 @@ void InferEngine::PrintModelInfo() const {
     }
 }
 
-// ͨ��preprocessing�õ�����ģ�����������
 std::vector<float> InferEngine::PreprocessToCHW(const cv::Mat& bgr, LetterBoxInfo& lb) const {
     cv::Mat lb_bgr = LetterboxBGR(bgr, input_w_, input_h_, lb);
     std::vector<float> input_chw(3 * input_h_ * input_w_);
@@ -192,7 +187,6 @@ InferResult InferEngine::Run(const cv::Mat& bgr) {
     );
 
     // 3) run
-    // TODO; in_names���ɸ���ȷ�ı�����
     std::vector<const char*> in_names;
     in_names.reserve(input_names_.size());
     for (auto& s : input_names_) in_names.push_back(s.c_str());

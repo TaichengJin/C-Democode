@@ -15,6 +15,7 @@ enum class ExitCode : int {
     RuntimeError = 3
 };
 
+// Inherit constructors from std::runtime_error
 struct InputError : std::runtime_error {
     using std::runtime_error::runtime_error;
 };
@@ -48,12 +49,11 @@ int main() {
             pp
         );*/
 
-        // ��������ͷ����
-
         video::FFmpegVideoSource src;
-        const std::string url = "rtsp://admin:%40%40admin7434@192.168.1.100:554/0/onvif/profile1/media.smp"; // TODO: �������
+        const std::string url = "rtsp://admin:%40%40admin7434@192.168.1.100:554/0/onvif/profile1/media.smp";
         src.Open(url);
 
+        // Note: sigmoid(0) = 0.5, so 0.6 keeps only predictions with positive logit
         PostprocessOptions pp;
         pp.score_thresh = 0.6f;
 
@@ -61,20 +61,16 @@ int main() {
 
         video::Frame frame;
         while (true) {
-            // ��һ֡��BGR Mat��
             if (!src.Read(frame)) {
 
                 std::cerr << "[Video] Read failed / EOF / disconnected.\n";
-                break; // Phase1: ��ֱ���˳�������������������
+                break; 
             }
 
-            // ����ѡ����ʱ���� FPS
             auto t0 = std::chrono::high_resolution_clock::now();
 
-            // ����
             auto result = engine.Run(frame.bgr);
 
-            // ����
             auto dets = PostprocessRTDETR(
                 result.outputs[0],
                 engine.InputW(), engine.InputH(),
@@ -83,19 +79,23 @@ int main() {
                 pp
             );
 
-            // ���ӻ�������ֱ���ڵ�ǰ֡�ϻ������� clone �Ķ��⿪����
-            cv::Mat vis = frame.bgr.clone();   // Phase1��ȫд��������ȾԭͼҲ����
+
+            cv::Mat vis = frame.bgr.clone();
             DrawDetections(vis, dets);
 
-            // ����ѡ�����ӵ�����Ϣ
             auto t1 = std::chrono::high_resolution_clock::now();
             double ms = std::chrono::duration<double, std::milli>(t1 - t0).count();
-            cv::putText(vis, cv::format("Inference+PP: %.1f ms", ms),
-                { 10, 30 }, cv::FONT_HERSHEY_SIMPLEX, 0.8, { 0,255,0 }, 2);
+            cv::putText(
+                vis, 
+                cv::format("Inference+PostProcessing: %.1f ms", ms),
+                { 10, 30 },               // Text position (x, y)
+                cv::FONT_HERSHEY_SIMPLEX, // Font type
+                0.8,                      // Font scale
+                { 0,255,0 },              // Text color (BGR)
+                2);                       // Line thickness
 
             cv::imshow("RT-DETR Live", vis);
 
-            // waitKey(1) �ô���ˢ�� + �����������
             int key = cv::waitKey(1);
             if (key == 27 || key == 'q' || key == 'Q') {
                 break;
@@ -104,8 +104,6 @@ int main() {
 
         src.Close();
         cv::destroyAllWindows();
-        return 0;
-        
 
 
 

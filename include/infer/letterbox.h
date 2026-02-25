@@ -7,8 +7,8 @@ struct LetterBoxInfo {
     int dst_w = 0; // model input W
     int dst_h = 0; // model input H
 
-    /*explicit LetterBoxInfo lbi(float scale, int pad_x, int pad_y);
-    explicit LetterBoxInfo lbi(float scale, int pad_x, int pad_y, int dst_w);*/
+    //explicit LetterBoxInfo lbi(float scale, int pad_x, int pad_y);
+    //explicit LetterBoxInfo lbi(float scale, int pad_x, int pad_y, int dst_w);
 
 };
 

@@ -162,11 +162,11 @@ namespace video {
             out.width = src_w;
             out.height = src_h;
 
-            // pts 转微秒（用于统计延迟/同步）
+            // pts 转微秒
             AVRational tb = fmt_->streams[video_stream_index_]->time_base;
             out.pts_us = ToUs(frame_->best_effort_timestamp, tb);
 
-            out.bgr = bgr_; // 浅拷贝：cv::Mat 引用计数（此处复用缓冲区，单线程 OK）
+            out.bgr = bgr_; // 浅拷贝：cv::Mat
             av_frame_unref(frame_);
             return true;
         }
@@ -191,13 +191,10 @@ namespace video {
     }
 
     void FFmpegVideoSource::InitScalerIfNeeded(int src_w, int src_h, int src_pix_fmt) {
-        // 输出固定成 BGR24，方便你现有 OpenCV + preprocess
+        // 输出固定成 BGR24
         const AVPixelFormat dst_fmt = AV_PIX_FMT_BGR24;
 
-        // 如果 sws 已存在但参数变化，需要重建
-        // 简化：每次 Open 后参数不变一般不会触发；如果变了也能正确重建
         if (sws_) {
-            // 这里可以更严格地缓存 src/dst 参数；先保持简单清晰
             // 直接释放重建（安全但略有开销）
             sws_freeContext(sws_);
             sws_ = nullptr;
